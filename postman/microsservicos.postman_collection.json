@@ -1,0 +1,172 @@
+{
+	"info": {
+		"_postman_id": "25a8a2d3-839e-484f-bf0f-534f989074d7",
+		"name": "microsservicos",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Buscar Cliente",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:1337/api/clientes/01ff690a-ebe2-42b4-8347-52823d9d27e4",
+					"host": [
+						"localhost"
+					],
+					"port": "1337",
+					"path": [
+						"api",
+						"clientes",
+						"01ff690a-ebe2-42b4-8347-52823d9d27e4"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Buscar produto 2",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:1337/api/produtos/cadeb8e6-9594-41af-8769-b083e897b4c1",
+					"host": [
+						"localhost"
+					],
+					"port": "1337",
+					"path": [
+						"api",
+						"produtos",
+						"cadeb8e6-9594-41af-8769-b083e897b4c1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Criar pedidos 1",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"cliente\":\"01ff690a-ebe2-42b4-8347-52823d9d27e4\",\n   \"produtos\":[\n      {\n         \"codigo\":\"cadeb8e6-9594-41af-8769-b083e897b4c1\",\n         \"quantidade\":\"1\"\n      },\n      {\n         \"codigo\":\"73d42efa-68d2-4296-ac1e-8201119adadc\",\n         \"quantidade\":\"1\"\n      }\n   ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:1337/api/pedidos",
+					"host": [
+						"localhost"
+					],
+					"port": "1337",
+					"path": [
+						"api",
+						"pedidos"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Criar pedidos 2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"cliente\":\"01ff690a-ebe2-42b4-8347-52823d9d27e4\",\n   \"produtos\":[\n      {\n         \"codigo\":\"cadeb8e6-9594-41af-8769-b083e897b4c1\",\n         \"quantidade\":\"1\"\n      }\n   ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:1337/api/pedidos",
+					"host": [
+						"localhost"
+					],
+					"port": "1337",
+					"path": [
+						"api",
+						"pedidos"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Buscar Pedido",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "3b6ed894-18f3-425a-b53e-f2581fb35173"
+				},
+				"url": {
+					"raw": "localhost:1337/api/pedidos/<id-pedido>",
+					"host": [
+						"localhost"
+					],
+					"port": "1337",
+					"path": [
+						"api",
+						"pedidos",
+						"<id-pedido>"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

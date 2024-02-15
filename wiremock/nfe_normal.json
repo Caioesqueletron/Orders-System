@@ -1,0 +1,10 @@
+{
+  "priority": 2,
+  "request": {
+    "urlPath": "/api/nfe",
+    "method": "POST"
+  },
+  "response": {
+    "status": 200
+  }
+}

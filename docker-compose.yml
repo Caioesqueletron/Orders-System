@@ -1,0 +1,209 @@
+version: "3.3"
+
+services:
+  api-gateway:
+    build:
+      context: api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - 1337:80
+    depends_on:
+      - cliente
+      - produto
+      - pedido
+      - processamento
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    env_file:
+      - develop.env
+    expose:
+      - 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    env_file:
+      - develop.env
+    depends_on:
+      - zookeeper
+    expose:
+      - 29092
+
+  db:
+    image: mysql:5.7
+    restart: always
+    volumes:
+      - "./db/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d"
+    env_file:
+      - develop.env
+    expose:
+      - 3306
+    ports:
+      - 3306:3306
+
+  nota-fiscal:
+    image: wiremock/wiremock
+    command: "--global-response-templating --verbose --disable-banner --container-threads 8"
+    expose:
+      - 8080
+    volumes:
+      - "./wiremock:/home/wiremock/mappings/"
+
+  cliente:
+    build:
+      context: cliente-ms
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: maven:3.6.3-jdk-11
+    entrypoint: mvn spring-boot:run
+    volumes:
+      - ./cliente-ms:/app
+      - maven-cache:/root/.m2
+    env_file:
+      - develop.env
+    depends_on:
+      - db
+    expose:
+      - 8080
+
+  pedido:
+    build:
+      context: pedidos-ms
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: maven:3.6.3-jdk-11
+    entrypoint: mvn spring-boot:run
+    volumes:
+      - ./pedidos-ms:/app
+      - maven-cache:/root/.m2
+    env_file:
+      - develop.env
+    depends_on:
+      - kafka
+      - db
+    expose:
+      - 8080
+
+  processamento:
+    build:
+      context: processamento-ms
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: maven:3.6.3-jdk-11
+    entrypoint: mvn spring-boot:run
+    volumes:
+      - ./processamento-ms:/app
+      - maven-cache:/root/.m2
+    env_file:
+      - develop.env
+    depends_on:
+      - kafka
+
+    expose:
+      - 8080
+
+  produto:
+    build:
+      context: produtos-ms
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: maven:3.6.3-jdk-11
+    entrypoint: mvn spring-boot:run
+    volumes:
+      - ./produtos-ms:/app
+      - maven-cache:/root/.m2
+    env_file:
+      - develop.env
+    depends_on:
+      - db
+    expose:
+      - 8080
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.3.3
+    environment:
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - xpack.security.audit.enabled=false
+      - ELASTIC_PASSWORD=jRN+C1VQsHrYx6s*jq5R
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.type=single-node"
+    expose:
+      - 9200
+    ports:
+      - "9200:9200"
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.3.3
+    expose:
+      - 5601
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_USERNAME: kibana_system
+      ELASTICSEARCH_PASSWORD: K+AiuK385WydTGa7jLvt
+      ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+
+    depends_on:
+      - elasticsearch
+
+  apm-server:
+    container_name: apm-server
+    cap_add: [ "CHOWN", "DAC_OVERRIDE", "SETGID", "SETUID" ]
+    cap_drop: [ "ALL" ]
+    image: docker.elastic.co/apm/apm-server:7.13.0
+    expose:
+      - 8200
+    env_file:
+      - develop.env
+    ports:
+      - "8200:8200"
+    depends_on:
+      - elasticsearch
+      - kibana
+
+    command: >
+      apm-server -e
+        -E apm-server.rum.enabled=true
+        -E setup.kibana.host=kibana:5601
+        -E apm-server.kibana.username=kibana_system
+        -E apm-server.kibana.password=K+AiuK385WydTGa7jLvt
+        -E setup.template.settings.index.number_of_replicas=0
+        -E apm-server.kibana.enabled=true
+        -E apm-server.kibana.host=kibana:5601
+        -E output.elasticsearch.hosts=["elasticsearch:9200"]
+        -E output.elasticsearch.username=elastic
+        -E output.elasticsearch.password=jRN+C1VQsHrYx6s*jq5R
+
+    healthcheck:
+      interval: 10s
+      retries: 12
+      test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://localhost:8200/
+
+  logstash:
+    image: logstash:2.3.2
+    command: logstash -f /etc/logstash/conf.d/logstash.conf
+    volumes:
+      - ./logstash:/etc/logstash/conf.d
+      - ./logstash/patterns:/opt/logstash/patterns
+    depends_on:
+      - elasticsearch
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.3.3
+    command: --strict.perms=false
+    volumes:
+      - ./filebeat/filebeat.docker.yml:/usr/share/filebeat/filebeat.yml:ro # Configuration file
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro           # Docker logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro                       # Additional information about containers
+      - ./filebeat/data:/usr/share/filebeat/data:rw                        # Persistence data
+    user: root                                                             # Allow access to log files and docker.sock
+    restart: on-failure
+
+volumes:
+  elastic_data:
+    driver: local
+  maven-cache:

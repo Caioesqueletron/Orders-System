@@ -1,0 +1,15 @@
+{
+  "priority": 1,
+  "request": {
+    "urlPath": "/api/nfe",
+    "method": "POST",
+    "bodyPatterns" : [ {
+      "matchesJsonPath" : "$[?(@.produtos.size() < 2)]"
+    } ]
+  },
+  "response": {
+    "status": 200,
+    "fixedDelayMilliseconds": 5000
+  }
+
+}
